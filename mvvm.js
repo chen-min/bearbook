@@ -12,7 +12,7 @@ function Wue(options={}){
             },
             set(newVal){
                 this._data[key] = newVal
-            }
+            } 
         })
     }
     new Compile(options.el, this)
@@ -33,10 +33,11 @@ function Compile(el, vm){
             if(node.nodeType === 3 && reg.test(text)){
                 let arrs = RegExp.$1.split('.')
                 let val = vm;
-                arrs.forEach(function(k){ // 取zhit.a.a  this.b
+                arrs.forEach(function(k){ 
                     val = val[k]
                 })
-                    node.textContent = text.replace(/\{\{(.*)\}\}/, val)
+                new Watcher(vm, RegExp.$1, function(newVal){ 
+                    node.textContent = text.replace(/\{\{(.*)\}\}/, newVal)
                 })
                 node.textContent = text.replace(/\{\{(.*)\}\}/, val)
             }
@@ -70,7 +71,6 @@ function Observe(data) { //这里写主要逻辑
                 value = newValue; 
                 observe(newValue)
                 dep.notify();
-
             }
         })
     }
@@ -86,13 +86,16 @@ function Dep(){
     this.subs = [];
 }
 
+//订阅
 Dep.prototype.addSub = function(sub){
+    console.log('addsub', sub)
     this.subs.push(sub)
 }
 Dep.prototype.notify = function(){
     this.subs.forEach(item => item.update())
 }
 
+//watcher
 function Watcher(vm, exp, fn){ 
     this.fn = fn; 
     this.vm = vm;
@@ -101,22 +104,21 @@ function Watcher(vm, exp, fn){
     Dep.target = this;
     let val = vm;
     let arr = exp.split('.');
-    arr.forEach(function(k){
-        val = val[k]
+    arr.forEach(function(k){ 
+        val = val[k];
     })
     Dep.target = null
 }
 Watcher.prototype.update = function(){
+    console.log('执行update方法')
     let val = this.vm;
     let arr = this.exp.split('.');
     arr.forEach(function(k){
         val = val[k]
     })
-    this.fn() 
+    this.fn(val) 
 
 }
-
-
 
 
 
