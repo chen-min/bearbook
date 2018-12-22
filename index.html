@@ -8,7 +8,8 @@
 <body>
     <div id="app">
         <p>{{a.a}}</p>
-        <p>{{b}}</p>
+        <p>{{test}}</p>
+        <input type="text" v-model='b'>
     </div>
 <script src="./mvvm.js"> </script>
 <script>
@@ -17,6 +18,11 @@
         data:{ //通过object.defineProperty赋值
             a: {a:'100'} ,
             b: '200'
+        },
+        computed:{
+            test(){
+                return this.b +  'test~~~'
+            },
         }
     })
 </script>

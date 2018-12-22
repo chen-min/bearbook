@@ -15,8 +15,20 @@ function Wue(options={}){
             } 
         })
     }
+    initComputed.call(this);
     new Compile(options.el, this)
 
+}
+function initComputed(){//具有缓存功能
+    let vm = this;
+    let computed = this.$options.computed; 
+    Object.keys(computed).forEach((key)=>{
+        Object.defineProperty(vm, key, {
+            get: typeof computed[key] === 'function'? computed[key]:computed[key].get,
+            set(){
+            }
+        })
+    })
 }
 function Compile(el, vm){
     vm.$el = document.querySelector(el)
@@ -36,10 +48,27 @@ function Compile(el, vm){
                 arrs.forEach(function(k){ 
                     val = val[k]
                 })
-                new Watcher(vm, RegExp.$1, function(newVal){ 
+                new Watcher(vm, RegExp.$1, function(newVal){ //函数里需要接受一个新值
                     node.textContent = text.replace(/\{\{(.*)\}\}/, newVal)
                 })
                 node.textContent = text.replace(/\{\{(.*)\}\}/, val)
+            }
+            if(node.nodeType === 1 ){
+                let nodeAttrs = node.attributes;
+                Array.from(nodeAttrs).forEach((attr)=>{
+                    let name = attr.name
+                    let exp = attr.value
+                    if(name.indexOf('v-') == 0){
+                        node.value = vm[exp]
+                    }
+                    new Watcher(vm, exp, function(newVal){
+                        node.value = vm[exp] 
+                    })
+                    node.addEventListener('input', (e )=> {
+                        let newVal = e.target.value
+                        vm[exp] = newVal;
+                    })
+                })
             }
             if(node.childNodes){
                 replaceText(node)
@@ -61,7 +90,7 @@ function Observe(data) { //这里写主要逻辑
         Object.defineProperty(data, key , {
             enumerable: true,
             get(){
-                Dep.target&&dep.addSub(Dep.target);//[watcher]
+                Dep.target&&dep.addSub(Dep.target);
                 return value;
             },
             set(newValue){ 
@@ -86,7 +115,6 @@ function Dep(){
     this.subs = [];
 }
 
-//订阅
 Dep.prototype.addSub = function(sub){
     console.log('addsub', sub)
     this.subs.push(sub)
@@ -95,7 +123,6 @@ Dep.prototype.notify = function(){
     this.subs.forEach(item => item.update())
 }
 
-//watcher
 function Watcher(vm, exp, fn){ 
     this.fn = fn; 
     this.vm = vm;
@@ -104,7 +131,7 @@ function Watcher(vm, exp, fn){
     Dep.target = this;
     let val = vm;
     let arr = exp.split('.');
-    arr.forEach(function(k){ 
+    arr.forEach(function(k){
         val = val[k];
     })
     Dep.target = null
@@ -119,6 +146,5 @@ Watcher.prototype.update = function(){
     this.fn(val) 
 
 }
-
 
 
